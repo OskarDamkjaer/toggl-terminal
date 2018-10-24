@@ -5,6 +5,7 @@ const fs = require('fs');
 
 const readFile = promisify(fs.readFile);
 const writeFile = promisify(fs.writeFile);
+const homedir = require('os').homedir();
 
 const toggl = axios.create({
   baseURL: 'https://www.toggl.com/api/v8/',
@@ -17,7 +18,7 @@ const toggl = axios.create({
 const getProjects = async () => {
   const resp = await toggl('workspaces/1041293/projects');
   const save = resp.data.map(item => ({name: item.name, pid: item.id}));
-  await writeFile('projects.json', JSON.stringify({courses: save}));
+  await writeFile(homedir + '/toggl-terminal/projects.json', JSON.stringify({courses: save}));
 };
 
 const findProjectById = async pid => {
@@ -26,7 +27,7 @@ const findProjectById = async pid => {
 };
 
 const readProj = async () => {
-  const rawFile = await readFile('projects.json');
+  const rawFile = await readFile(homedir + '/toggl-terminal/projects.json');
   const projects = JSON.parse(rawFile);
   return projects.courses;
 };
@@ -139,4 +140,5 @@ const main = async (command, arg1, arg2) => {
 };
 //FELhantering, snygghet, documentera så läsbart 
 // CONVENTION ALLA BÖRJAR MED UPPERCASE
+// //TODO path till configfil
 main(process.argv[2], process.argv[3], process.argv[4]);
