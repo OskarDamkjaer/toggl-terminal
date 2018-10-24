@@ -21,8 +21,8 @@ const getProjects = async () => {
 };
 
 const findProjectById = async pid => {
-  const projects = await readProj;
-  return projects.courses.filter(item => item.pid === pid)[0];
+  const courses = await readProj();
+  return courses.filter(item => item.pid === pid)[0];
 };
 
 const readProj = async () => {
@@ -53,17 +53,17 @@ const getCurrent = async () => {
   const now = moment();
   const diffMin = now.diff(start, 'minutes');
   if (diffMin < 60) {
-    return projectName + '(' + data.description + ') for' + diffMin + 'minutes';
+    return projectName + ' (' + data.description + ') for ' + diffMin + ' minutes.';
   }
   return (
     projectName +
-    '(' +
+    ' (' +
     data.description +
-    ')for' +
+    ') for ' +
     Math.floor(diffMin / 60) +
-    'hours and' +
+    ' hours and ' +
     diffMin % 60 +
-    'minutes'
+    ' minutes.'
   );
 };
 
@@ -82,12 +82,14 @@ const stop = async () => {
 };
 
 const start = async (inProject, inDescript) => {
+  if (!inProject) {
+    console.log('no project entered');
+  }
+
   await stop();
   const projects = await readProj();
   let projToStart = inProject.charAt(0).toUpperCase() + inProject.slice(1);
-  if (!projToStart) {
-    console.log('no project entered');
-  }
+
   const foundProj = projects.filter(item =>
     item.name.startsWith(projToStart),
   )[0];
