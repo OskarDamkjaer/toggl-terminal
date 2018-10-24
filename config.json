@@ -1,4 +1,4 @@
 {
-    "api_token" : "exampleApiKey",
+    "api_token" : "SET YOUR API KEY HERE",
     "pathRelativeToHome": "/toggl-terminal/"
 }

@@ -12,7 +12,7 @@ const writeFile = promisify(fs.writeFile);
 const toggl = axios.create({
   baseURL: 'https://www.toggl.com/api/v8/',
   auth: {
-    username: config.api_token,
+    username: process.env.TOGGL_API_KEY || config.api_token,
     password: 'api_token',
   },
 });
@@ -138,5 +138,4 @@ const main = async (command, arg1, arg2) => {
   }
   console.log('no command ', command);
 };
-//FELhantering, snygghet, documentera så läsbart 
 main(process.argv[2], process.argv[3], process.argv[4]);
