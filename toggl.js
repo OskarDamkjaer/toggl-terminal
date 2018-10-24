@@ -1,16 +1,18 @@
 const axios = require('axios');
 const moment = require('moment');
 const promisify = require('util').promisify;
+const homedir = require('os').homedir();
 const fs = require('fs');
+const config = require('./config.json')
 
+const projectPath = homedir + config.pathRelativeToHome + 'projects.json'
 const readFile = promisify(fs.readFile);
 const writeFile = promisify(fs.writeFile);
-const homedir = require('os').homedir();
 
 const toggl = axios.create({
   baseURL: 'https://www.toggl.com/api/v8/',
   auth: {
-    username: 'exampleApiKey',
+    username: config.api_token,
     password: 'api_token',
   },
 });
@@ -18,7 +20,7 @@ const toggl = axios.create({
 const getProjects = async () => {
   const resp = await toggl('workspaces/1041293/projects');
   const save = resp.data.map(item => ({name: item.name, pid: item.id}));
-  await writeFile(homedir + '/toggl-terminal/projects.json', JSON.stringify({courses: save}));
+  await writeFile(projectPath, JSON.stringify({courses: save}));
 };
 
 const findProjectById = async pid => {
@@ -27,7 +29,7 @@ const findProjectById = async pid => {
 };
 
 const readProj = async () => {
-  const rawFile = await readFile(homedir + '/toggl-terminal/projects.json');
+  const rawFile = await readFile(projectPath);
   const projects = JSON.parse(rawFile);
   return projects.courses;
 };
@@ -121,8 +123,6 @@ const start = async (inProject, inDescript) => {
   }
 };
 
-const commands = ['start', 'stop', 'status', 'current'];
-
 const main = async (command, arg1, arg2) => {
   if (command === 'start') {
     return console.log(await start(arg1, arg2));
@@ -139,6 +139,4 @@ const main = async (command, arg1, arg2) => {
   console.log('no command ', command);
 };
 //FELhantering, snygghet, documentera så läsbart 
-// CONVENTION ALLA BÖRJAR MED UPPERCASE
-// //TODO path till configfil
 main(process.argv[2], process.argv[3], process.argv[4]);
