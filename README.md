@@ -16,7 +16,10 @@ It is a bit light on error handling so use at your own risk.
 
 ## Convenient aliases!
 alias toggl='node ~/toggl-terminal/toggl.js '
+
 alias tstart='node ~/toggl-terminal/toggl.js start'
+
 alias tstop='node ~/toggl-terminal/toggl.js stop'
+
 alias tstatus='node ~/toggl-terminal/toggl.js status'
 
