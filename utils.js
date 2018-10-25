@@ -4,7 +4,7 @@ const minutesToString = minutes => {
   if (minutes < 60) {
     return minutes + ' minutes.';
   }
-  return Math.floor(diffMin / 60) + ' hours and ' + diffMin % 60 + ' minutes.';
+  return Math.floor(minutes / 60) + ' hours and ' + minutes% 60 + ' minutes.';
 };
 
 const calcDiffMin = start => {
