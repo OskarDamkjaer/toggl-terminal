@@ -3,9 +3,9 @@ const moment = require('moment');
 const promisify = require('util').promisify;
 const homedir = require('os').homedir();
 const fs = require('fs');
-const config = require('./config.json')
+const config = require('./config.json');
 
-const projectPath = homedir + config.pathRelativeToHome + 'projects.json'
+const projectPath = homedir + config.pathRelativeToHome + 'projects.json';
 const readFile = promisify(fs.readFile);
 const writeFile = promisify(fs.writeFile);
 
@@ -52,22 +52,24 @@ const getCurrent = async () => {
     projectName = project.name;
   }
 
-  const start = moment(data.start);
-  const now = moment();
-  const diffMin = now.diff(start, 'minutes');
-  if (diffMin < 60) {
-    return projectName + ' (' + data.description + ') for ' + diffMin + ' minutes.';
-  }
+  const diffMin = calcDiffMin(data.start);
   return (
-    projectName +
-    ' (' +
-    data.description +
-    ') for ' +
-    Math.floor(diffMin / 60) +
-    ' hours and ' +
-    diffMin % 60 +
-    ' minutes.'
+    projectName + ' (' + data.description + ') for ' + minutesToString(diffMin)
   );
+};
+
+const minutesToString = minutes => {
+  if (minutes < 60) {
+    return minutes + ' minutes.';
+  }
+  return Math.floor(diffMin / 60) + ' hours and ' + diffMin % 60 + ' minutes.';
+};
+
+const calcDiffMin = start => {
+  const begin = moment(start);
+  const now = moment();
+  const diffMin = now.diff(begin, 'minutes');
+  return diffMin;
 };
 
 const stop = async () => {
@@ -76,11 +78,21 @@ const stop = async () => {
   if (!data) {
     return 'no rimer running';
   }
+  // Now we must have a project
+  const project = await findProjectById(data.pid);
+
   try {
     await toggl.put('time_entries/' + data.id + '/stop');
-    return 'stopped ' + data.description;
+    return (
+      'stopped ' +
+      project.name +
+      ' (' +
+      data.description +
+      '), after ' +
+      minutesToString(calcDiffMin(data.start))
+    );
   } catch (e) {
-    return 'failed to stop';
+    return 'failed to stop: ' + e;
   }
 };
 
@@ -138,4 +150,5 @@ const main = async (command, arg1, arg2) => {
   }
   console.log('no command ', command);
 };
+
 main(process.argv[2], process.argv[3], process.argv[4]);
