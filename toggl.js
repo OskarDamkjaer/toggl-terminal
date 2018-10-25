@@ -1,9 +1,9 @@
 const axios = require('axios');
-const moment = require('moment');
 const promisify = require('util').promisify;
 const homedir = require('os').homedir();
 const fs = require('fs');
 const config = require('./config.json');
+const {minutesToString, calcDiffMin} = require('./utils.js');
 
 const projectPath = homedir + config.pathRelativeToHome + 'projects.json';
 const readFile = promisify(fs.readFile);
@@ -56,20 +56,6 @@ const getCurrent = async () => {
   return (
     projectName + ' (' + data.description + ') for ' + minutesToString(diffMin)
   );
-};
-
-const minutesToString = minutes => {
-  if (minutes < 60) {
-    return minutes + ' minutes.';
-  }
-  return Math.floor(diffMin / 60) + ' hours and ' + diffMin % 60 + ' minutes.';
-};
-
-const calcDiffMin = start => {
-  const begin = moment(start);
-  const now = moment();
-  const diffMin = now.diff(begin, 'minutes');
-  return diffMin;
 };
 
 const stop = async () => {
