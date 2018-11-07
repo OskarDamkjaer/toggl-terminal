@@ -21,6 +21,7 @@ const getProjects = async () => {
   const resp = await toggl('workspaces/1041293/projects');
   const save = resp.data.map(item => ({name: item.name, pid: item.id}));
   await writeFile(projectPath, JSON.stringify({courses: save}));
+  return save
 };
 
 const findProjectById = async pid => {
@@ -133,6 +134,9 @@ const main = async (command, arg1, arg2) => {
   }
   if (command === 'current') {
     return console.log(await getCurrent());
+  }
+  if (command === 'update'){
+      return console.log(await getProjects());
   }
   console.log('no command ', command);
 };
