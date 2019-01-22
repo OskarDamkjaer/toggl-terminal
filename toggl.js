@@ -26,7 +26,7 @@ const getProjects = async () => {
 
 const findProjectById = async pid => {
   const courses = await readProj();
-  return courses.filter(item => item.pid === pid)[0];
+  return courses.find(item => item.pid === pid);
 };
 
 const readProj = async () => {
@@ -92,9 +92,9 @@ const start = async (inProject, inDescript) => {
   const projects = await readProj();
   let projToStart = inProject.charAt(0).toUpperCase() + inProject.slice(1);
 
-  const foundProj = projects.filter(item =>
+  const foundProj = projects.find(item =>
     item.name.startsWith(projToStart),
-  )[0];
+  );
 
   if (!foundProj) {
     return 'no project found matching ' + inProject;
