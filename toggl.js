@@ -99,7 +99,8 @@ const start = async (inProject, inDescript) => {
 
   if (!foundProj) {
     await getProjects();
-    let foundProj = projects.find(item => item.name.startsWith(projToStart));
+    const newProjects = await readProj();
+    let foundProj = newProjects.find(item => item.name.startsWith(projToStart));
     if (!foundProj) {
       return 'no project found matching ' + inProject;
     }
