@@ -21,11 +21,16 @@ const getProjects = async () => {
   const resp = await toggl('workspaces/1041293/projects');
   const save = resp.data.map(item => ({name: item.name, pid: item.id}));
   await writeFile(projectPath, JSON.stringify({courses: save}));
-  return save
+  return save;
 };
 
 const findProjectById = async pid => {
-  const courses = await readProj();
+  let courses = await readProj();
+  const project = courses.find(item => item.pid === pid);
+  if (!project) {
+    await getProjects();
+    courses = await readProj();
+  }
   return courses.find(item => item.pid === pid);
 };
 
@@ -45,10 +50,7 @@ const getCurrent = async () => {
 
   let project = await findProjectById(resp.data.data.pid);
   let projectName = 'no Project found';
-  if (!project) {
-    await getProjects();
-    project = await findProjectById(resp.data.data.pid);
-  }
+
   if (project) {
     projectName = project.name;
   }
@@ -63,7 +65,7 @@ const stop = async () => {
   const resp = await toggl('time_entries/current');
   const data = resp.data.data;
   if (!data) {
-    return 'no rimer running';
+    return 'no timer running';
   }
   // Now we must have a project
   const project = await findProjectById(data.pid);
@@ -90,14 +92,17 @@ const start = async (inProject, inDescript) => {
 
   await stop();
   const projects = await readProj();
-  let projToStart = inProject.charAt(0).toUpperCase() + inProject.slice(1);
+  // make first letter capital by convention
+  const projToStart = inProject.charAt(0).toUpperCase() + inProject.slice(1);
 
-  const foundProj = projects.find(item =>
-    item.name.startsWith(projToStart),
-  );
+  let foundProj = projects.find(item => item.name.startsWith(projToStart));
 
   if (!foundProj) {
-    return 'no project found matching ' + inProject;
+    await getProjects();
+    let foundProj = projects.find(item => item.name.startsWith(projToStart));
+    if (!foundProj) {
+      return 'no project found matching ' + inProject;
+    }
   }
   const foundProjId = foundProj.pid;
   const foundProjName = foundProj.name;
@@ -135,8 +140,8 @@ const main = async (command, arg1, arg2) => {
   if (command === 'current') {
     return console.log(await getCurrent());
   }
-  if (command === 'update'){
-      return console.log(await getProjects());
+  if (command === 'update') {
+    return console.log(await getProjects());
   }
   console.log('no command ', command);
 };
