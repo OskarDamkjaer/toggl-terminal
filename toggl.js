@@ -1,5 +1,7 @@
 const axios = require('axios');
-const promisify = require('util').promisify;
+const {
+    promisify
+} = require('util');
 const homedir = require('os').homedir();
 const fs = require('fs');
 const config = require('./config.json');
@@ -29,7 +31,7 @@ const readProj = async () => {
     return projects;
 };
 
-const helper = (projects, {
+const findInProjList = (projects, {
     name,
     pid
 }) => {
@@ -44,7 +46,7 @@ const helper = (projects, {
 
 const privateFindProject = async timer => {
     const projects = await readProj();
-    const foundProj = helper(projects, timer)
+    const foundProj = findInProjList(projects, timer)
 
     if (foundProj) {
         return {
@@ -55,7 +57,7 @@ const privateFindProject = async timer => {
 
     const newProjects = await fetchProjects();
 
-    const newAttempt = helper(newProjects, timer)
+    const newAttempt = findInProjList(newProjects, timer)
 
     return newAttempt ? {
         project: newAttempt,
@@ -98,51 +100,65 @@ const fetchProjects = async () => {
     return projects
 };
 
-const getCurrent = async () => {
+const privateGetCurrent = async () => {
     const {
         timer,
         error
     } = await privateCurrentTimer()
 
     if (error) {
-        return error
+        return {
+            error,
+            timer: null,
+            project: null
+        }
     }
 
-    const {
-        project,
-        error: new_error
-    } = await privateFindProject(timer);
-
-    let projectName = 'no Project found';
-
-    if (project) {
-        projectName = project.name;
-    }
-
-    const diffMin = calcDiffMin(timer.start);
-    return (
-        projectName + ' (' + timer.description + ') for ' + minutesToString(diffMin)
-    );
-};
-
-const stop = async () => {
-    const {
-        timer,
-        error
-    } = await privateCurrentTimer()
-
-    if (error) {
-        return error
-    }
-
-    // Now we must have a project
     const {
         project,
         error: new_error
     } = await privateFindProject(timer);
 
     if (new_error) {
-        return new_error
+        return {
+            error: new_error,
+            timer: null,
+            project: null
+        }
+    }
+
+    return {
+        project,
+        timer,
+        error: null
+    }
+
+};
+
+const getCurrent = async () => {
+    const {
+        timer,
+        project,
+        error
+    } = await privateGetCurrent()
+
+    if (error) {
+        return error
+    }
+
+    const diffMin = calcDiffMin(timer.start);
+    return `${project.name} (${timer.description}) for ${minutesToString(diffMin)}`
+}
+
+const stop = async () => {
+    const {
+        timer,
+        project,
+        error
+    } = await privateGetCurrent()
+
+    if (error) {
+        return error
     }
 
     await toggl.put('time_entries/' + timer.id + '/stop');
