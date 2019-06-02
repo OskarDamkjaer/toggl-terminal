@@ -8,6 +8,7 @@ const {
     calcDiffMin
 } = require('./utils.js');
 
+
 const projectPath = homedir + config.pathRelativeToHome + 'projects.json';
 const readFile = promisify(fs.readFile);
 const writeFile = promisify(fs.writeFile);
@@ -20,48 +21,81 @@ const toggl = axios.create({
     },
 });
 
-const privateFindByName = projectName => {
-    const projects = await readProj();
-    // make first letter capital by convention
-    const projToStart = inProject.charAt(0).toUpperCase() + inProject.slice(1);
-    const foundProj = projects.find(item => item.name.startsWith(projToStart));
-    if (foundProj) {
-        return {
-            ...foundProj,
-            error: null
-        }
-    }
-    await getProjects();
-    const newProjects = await readProj();
-    const newAttempt = newProjects.find(item => item.name.startsWith(projToStart));
-    return newAttempt ? {
-        ...newAttempt,
-        error: null
-    } : {
-        error: 'no project found matching ' + inProject
+const readProj = async () => {
+    const rawFile = await readFile(projectPath);
+    const {
+        projects
+    } = JSON.parse(rawFile);
+    return projects;
+};
+
+const helper = (projects, {
+    name,
+    pid
+}) => {
+    if (name) {
+        // make first letter capital by convention
+        const wantedName = name.charAt(0).toUpperCase() + name.slice(1);
+        return projects.find(item => item.name.startsWith(wantedName));
+    } else {
+        return projects.find(item => item.pid === pid);
     }
 }
 
-const privateCurrent = async () => {
+const privateFindProject = async ({
+    name,
+    pid
+}) => {
+    const projects = await readProj();
+    const foundProj = helper(projects, {
+        name,
+        pid
+    })
+
+    if (foundProj) {
+        return {
+            project: foundProj,
+            error: null
+        }
+    }
+
+    const newProjects = await fetchProjects();
+
+    const newAttempt = helper(newProjects, {
+        name,
+        pid
+    })
+
+    return newAttempt ? {
+        project: newAttempt,
+        error: null
+    } : {
+        project: null,
+        error: `no project found matching ${name}`
+    }
+}
+
+const privateCurrentTimer = async () => {
     try {
         const resp = await toggl('time_entries/current');
-        const data = resp.data.data;
-        return data ? {
-            data,
+        const timer = resp.data.data;
+
+        return timer ? {
+            timer,
             error: null
         } : {
-            data: null,
+            timer: null,
             error: 'no timer running'
         }
     } catch (e) {
         return {
-            data: null,
+            timer: null,
             error: 'could not reach toggl'
         }
     }
 }
 
-const getProjects = async () => {
+const fetchProjects = async () => {
     const resp = await toggl('workspaces/1041293/projects');
     const projects = resp.data.map(item => ({
         name: item.name,
@@ -73,81 +107,80 @@ const getProjects = async () => {
     return projects
 };
 
-const findProjectById = async pid => {
-    let courses = await readProj();
-    const project = courses.find(item => item.pid === pid);
-    if (!project) {
-        await getProjects();
-        courses = await readProj();
-    }
-    return courses.find(item => item.pid === pid);
-};
-
-const readProj = async () => {
-    const rawFile = await readFile(projectPath);
-    const {
-        projects
-    } = JSON.parse(rawFile);
-    return projects;
-};
-
 const getCurrent = async () => {
     const {
-        data,
+        timer,
         error
-    } = await privateCurrent()
+    } = await privateCurrentTimer()
 
     if (error) {
         return error
     }
 
-    let project = await findProjectById(data.pid);
+    const {
+        project,
+        error: new_error
+    } = await privateFindProject(timer);
+
     let projectName = 'no Project found';
 
     if (project) {
         projectName = project.name;
     }
 
-    const diffMin = calcDiffMin(data.start);
+    const diffMin = calcDiffMin(timer.start);
     return (
-        projectName + ' (' + data.description + ') for ' + minutesToString(diffMin)
+        projectName + ' (' + timer.description + ') for ' + minutesToString(diffMin)
     );
 };
 
 const stop = async () => {
     const {
-        data,
+        timer,
         error
-    } = await privateCurrent()
+    } = await privateCurrentTimer()
 
     if (error) {
         return error
     }
 
     // Now we must have a project
-    const project = await findProjectById(data.pid);
+    const {
+        project,
+        error: new_error
+    } = await privateFindProject(timer);
 
-    await toggl.put('time_entries/' + data.id + '/stop');
+    if (new_error) {
+        return new_error
+    }
 
-    return `stopped ${project.name} (${data.description}), after ${minutesToString(calcDiffMin(data.start))}`
+    await toggl.put('time_entries/' + timer.id + '/stop');
+
+    return `stopped ${project.name} (${timer.description}), after ${minutesToString(calcDiffMin(timer.start))}`
 };
 
 const start = async (inProject, description = '') => {
     if (!inProject) {
-        console.log('no project entered');
+        return 'no project entered'
     }
 
     await stop();
 
     const {
-        pid,
-        name,
+        project,
         error
-    } = privateFindByName(inProject)
+    } = await privateFindProject({
+        name: inProject
+    })
 
     if (error) {
         return error
     }
+
+    const {
+        name,
+        pid
+    } = project
 
     try {
         await toggl.post('/time_entries/start', {
@@ -175,11 +208,8 @@ const main = async (command, arg1, arg2) => {
         case 'status':
             console.log(await getCurrent());
             break;
-        case 'current':
-            console.log(await getCurrent());
-            break;
         case 'update':
-            console.log(await getProjects());
+            console.log(await fetchProjects());
             break;
         default:
             console.log(`no command ${command}`);
