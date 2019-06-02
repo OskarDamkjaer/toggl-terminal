@@ -70,7 +70,13 @@ const getCurrent = async () => {
 };
 
 const stop = async () => {
-    const resp = await toggl('time_entries/current');
+    let resp;
+    try {
+        resp = await toggl('time_entries/current');
+    } catch (e) {
+        return 'could not reach toggl server'
+    }
+
     const data = resp.data.data;
     if (!data) {
         return 'no timer running';
@@ -135,45 +141,27 @@ const start = async (inProject, inDescript) => {
         return 'failed to start timer ' + e;
     }
 };
-commands = {
-    'start': start,
-    'stop': stop,
-    'status': status,
-    'current': getCurrent,
-    'update': getProjects,
-}
 
 const main = async (command, arg1, arg2) => {
-    try {
-        func = commands[command]
-        if (func) {
-            console.log(func(arg1, arg2))
-        } else {
+    switch (command) {
+        case 'start':
+            console.log(await start(arg1, arg2));
+            break;
+        case 'stop':
+            console.log(await stop());
+            break;
+        case 'status':
+            console.log(await getCurrent());
+            break;
+        case 'current':
+            console.log(await getCurrent());
+            break;
+        case 'update':
+            console.log(await getProjects());
+            break;
+        default:
             console.log(`no command ${command}`);
-
-        }
-        switch (command) {
-            case 'start':
-                console.log(await start(arg1, arg2));
-                break;
-            case 'stop':
-                console.log(await stop());
-                break;
-            case 'status':
-                console.log(await getCurrent());
-                break;
-            case 'current':
-                console.log(await getCurrent());
-                break;
-            case 'update':
-                console.log(await getProjects());
-                break;
-            default:
-                console.log(`no command ${command}`);
-        }
-    } catch (e) {
-        console.log(`Command failed ${e}, check your internet`)
-    };
+    }
 }
 
 main(process.argv[2], process.argv[3], process.argv[4]);
