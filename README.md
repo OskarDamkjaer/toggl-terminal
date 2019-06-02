@@ -26,3 +26,4 @@ This alias enables the quicker syntax `t stop` for example.
 ## TODO
 
 Lägg till study som ett commando? som kör pomodoro åt en härifrån?
+Handle updaterade kurser och dåligt internet
