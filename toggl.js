@@ -37,20 +37,14 @@ const helper = (projects, {
         // make first letter capital by convention
         const wantedName = name.charAt(0).toUpperCase() + name.slice(1);
         return projects.find(item => item.name.startsWith(wantedName));
-    } else {
-        return projects.find(item => item.pid === pid);
     }
+
+    return projects.find(item => item.pid === pid);
 }
 
-const privateFindProject = async ({
-    name,
-    pid
-}) => {
+const privateFindProject = async timer => {
     const projects = await readProj();
-    const foundProj = helper(projects, {
-        name,
-        pid
-    })
+    const foundProj = helper(projects, timer)
 
     if (foundProj) {
         return {
@@ -61,17 +55,14 @@ const privateFindProject = async ({
 
     const newProjects = await fetchProjects();
 
-    const newAttempt = helper(newProjects, {
-        name,
-        pid
-    })
+    const newAttempt = helper(newProjects, timer)
 
     return newAttempt ? {
         project: newAttempt,
         error: null
     } : {
         project: null,
-        error: `no project found matching ${name}`
+        error: `no project found matching ${timer.name}`
     }
 }
 
