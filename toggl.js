@@ -135,24 +135,45 @@ const start = async (inProject, inDescript) => {
         return 'failed to start timer ' + e;
     }
 };
+commands = {
+    'start': start,
+    'stop': stop,
+    'status': status,
+    'current': getCurrent,
+    'update': getProjects,
+}
 
 const main = async (command, arg1, arg2) => {
-    if (command === 'start') {
-        return console.log(await start(arg1, arg2));
-    }
-    if (command === 'stop') {
-        return console.log(await stop());
-    }
-    if (command === 'status') {
-        return console.log(await getCurrent());
-    }
-    if (command === 'current') {
-        return console.log(await getCurrent());
-    }
-    if (command === 'update') {
-        return console.log(await getProjects());
-    }
-    console.log('no command ', command);
-};
+    try {
+        func = commands[command]
+        if (func) {
+            console.log(func(arg1, arg2))
+        } else {
+            console.log(`no command ${command}`);
+
+        }
+        switch (command) {
+            case 'start':
+                console.log(await start(arg1, arg2));
+                break;
+            case 'stop':
+                console.log(await stop());
+                break;
+            case 'status':
+                console.log(await getCurrent());
+                break;
+            case 'current':
+                console.log(await getCurrent());
+                break;
+            case 'update':
+                console.log(await getProjects());
+                break;
+            default:
+                console.log(`no command ${command}`);
+        }
+    } catch (e) {
+        console.log(`Command failed ${e}, check your internet`)
+    };
+}
 
 main(process.argv[2], process.argv[3], process.argv[4]);
