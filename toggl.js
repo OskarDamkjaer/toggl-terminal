@@ -20,16 +20,57 @@ const toggl = axios.create({
     },
 });
 
+const privateFindByName = projectName => {
+    const projects = await readProj();
+    // make first letter capital by convention
+    const projToStart = inProject.charAt(0).toUpperCase() + inProject.slice(1);
+    const foundProj = projects.find(item => item.name.startsWith(projToStart));
+    if (foundProj) {
+        return {
+            ...foundProj,
+            error: null
+        }
+    }
+    await getProjects();
+    const newProjects = await readProj();
+    const newAttempt = newProjects.find(item => item.name.startsWith(projToStart));
+    return newAttempt ? {
+        ...newAttempt,
+        error: null
+    } : {
+        error: 'no project found matching ' + inProject
+    }
+}
+
+const privateCurrent = async () => {
+    try {
+        const resp = await toggl('time_entries/current');
+        const data = resp.data.data;
+        return data ? {
+            data,
+            error: null
+        } : {
+            data: null,
+            error: 'no timer running'
+        }
+    } catch (e) {
+        return {
+            data: null,
+            error: 'could not reach toggl'
+        }
+    }
+}
+
 const getProjects = async () => {
     const resp = await toggl('workspaces/1041293/projects');
-    const save = resp.data.map(item => ({
+    const projects = resp.data.map(item => ({
         name: item.name,
         pid: item.id
     }));
     await writeFile(projectPath, JSON.stringify({
-        courses: save
+        projects
     }));
-    return save;
+    return projects
 };
 
 const findProjectById = async pid => {
@@ -44,29 +85,11 @@ const findProjectById = async pid => {
 
 const readProj = async () => {
     const rawFile = await readFile(projectPath);
-    const projects = JSON.parse(rawFile);
-    return projects.courses;
+    const {
+        projects
+    } = JSON.parse(rawFile);
+    return projects;
 };
-
-const privateCurrent = async () => {
-    try {
-        const resp = await toggl('time_entries/current');
-        const data = resp.data.data;
-        return data ? {
-            data,
-            error: null
-        } : {
-            data: null,
-            error: 'no timer running'
-        }
-
-    } catch (e) {
-        return {
-            data: null,
-            error: 'could not reach toggl'
-        }
-    }
-}
 
 const getCurrent = async () => {
     const {
@@ -109,45 +132,33 @@ const stop = async () => {
     return `stopped ${project.name} (${data.description}), after ${minutesToString(calcDiffMin(data.start))}`
 };
 
-const start = async (inProject, inDescript) => {
+const start = async (inProject, description = '') => {
     if (!inProject) {
         console.log('no project entered');
     }
 
     await stop();
-    const projects = await readProj();
-    // make first letter capital by convention
-    const projToStart = inProject.charAt(0).toUpperCase() + inProject.slice(1);
 
-    let foundProj = projects.find(item => item.name.startsWith(projToStart));
+    const {
+        pid,
+        name,
+        error
+    } = privateFindByName(inProject)
 
-    if (!foundProj) {
-        await getProjects();
-        const newProjects = await readProj();
-        foundProj = newProjects.find(item => item.name.startsWith(projToStart));
-        if (!foundProj) {
-            return 'no project found matching ' + inProject;
-        }
-    }
-
-    const foundProjId = foundProj.pid;
-    const foundProjName = foundProj.name;
-
-    let desc = inDescript;
-    if (!inDescript) {
-        desc = '';
+    if (error) {
+        return error
     }
 
     try {
         await toggl.post('/time_entries/start', {
             time_entry: {
-                description: desc,
-                pid: foundProjId,
+                description,
+                pid,
                 tags: [],
                 created_with: 'curl',
-            },
+            }
         });
-        return 'started timer for ' + foundProjName;
+        return 'started timer for ' + name;
     } catch (e) {
         return 'failed to start timer ' + e;
     }
