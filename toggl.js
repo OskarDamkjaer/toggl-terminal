@@ -48,15 +48,37 @@ const readProj = async () => {
     return projects.courses;
 };
 
-const getCurrent = async () => {
-    const resp = await toggl('time_entries/current');
-    const data = resp.data.data;
+const privateCurrent = async () => {
+    try {
+        const resp = await toggl('time_entries/current');
+        const data = resp.data.data;
+        return data ? {
+            data,
+            error: null
+        } : {
+            data: null,
+            error: 'no timer running'
+        }
 
-    if (!data) {
-        return 'no timer running';
+    } catch (e) {
+        return {
+            data: null,
+            error: 'could not reach toggl'
+        }
+    }
+}
+
+const getCurrent = async () => {
+    const {
+        data,
+        error
+    } = await privateCurrent()
+
+    if (error) {
+        return error
     }
 
-    let project = await findProjectById(resp.data.data.pid);
+    let project = await findProjectById(data.pid);
     let projectName = 'no Project found';
 
     if (project) {
@@ -70,33 +92,21 @@ const getCurrent = async () => {
 };
 
 const stop = async () => {
-    let resp;
-    try {
-        resp = await toggl('time_entries/current');
-    } catch (e) {
-        return 'could not reach toggl server'
+    const {
+        data,
+        error
+    } = await privateCurrent()
+
+    if (error) {
+        return error
     }
 
-    const data = resp.data.data;
-    if (!data) {
-        return 'no timer running';
-    }
     // Now we must have a project
     const project = await findProjectById(data.pid);
 
-    try {
-        await toggl.put('time_entries/' + data.id + '/stop');
-        return (
-            'stopped ' +
-            project.name +
-            ' (' +
-            data.description +
-            '), after ' +
-            minutesToString(calcDiffMin(data.start))
-        );
-    } catch (e) {
-        return 'failed to stop: ' + e;
-    }
+    await toggl.put('time_entries/' + data.id + '/stop');
+
+    return `stopped ${project.name} (${data.description}), after ${minutesToString(calcDiffMin(data.start))}`
 };
 
 const start = async (inProject, inDescript) => {
@@ -114,11 +124,12 @@ const start = async (inProject, inDescript) => {
     if (!foundProj) {
         await getProjects();
         const newProjects = await readProj();
-        let foundProj = newProjects.find(item => item.name.startsWith(projToStart));
+        foundProj = newProjects.find(item => item.name.startsWith(projToStart));
         if (!foundProj) {
             return 'no project found matching ' + inProject;
         }
     }
+
     const foundProjId = foundProj.pid;
     const foundProjName = foundProj.name;
 
