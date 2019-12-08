@@ -13,10 +13,10 @@ I built this mainly for my own convenience so it might have some rough edges :)
 
 ## Available commands
 
-*   `(node toggl.js) start projectName [optionalDescription] //Starts a project with the project name and description`
-*   `(node toggl.js) stop //Stop current timer if there is one`
-*   `(node toggl.js) status //Print current timer if there is one`
-*   `(node toggl.js) update //Update the list of projects (should be done automatically)`
+*   `(node toggl.js) start projectName [optionalDescription]` //Starts a timer with the project name and description 
+*   `(node toggl.js) stop` //Stop current timer if there is one
+*   `(node toggl.js) status` //Print current timer if there is one
+*   `(node toggl.js) update` //Update the list of projects (should be done automatically)
 
 ## Convenient alias!
 
