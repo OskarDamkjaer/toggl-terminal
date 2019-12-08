@@ -7,7 +7,7 @@ It is a bit light on error handling so use at your own risk.
 ## Getting started
 
 *   Clone the project
-*   Run `yarn install`
+*   Run `yarn`
 *   Set up your own values in config.json (api key is found on your accountpage at toggl.com)
 *   You could also set export TOGGL_API_KEY if you don't want to put it in config.json
 
@@ -15,14 +15,10 @@ It is a bit light on error handling so use at your own risk.
 
 *   (node toggl.js) start projectName [optionalDescription] //Starts a project with the project name and description
 *   (node toggl.js) stop //Stop current timer if there is one
-*   (node toggl.js) status //Prints current timer if there is one
-*   (node toggl.js) update //Update the list of projects (should be doen automatically)
+*   (node toggl.js) status //Print current timer if there is one
+*   (node toggl.js) update //Update the list of projects (should be done automatically)
 
 ## Convenient alias!
 
 `alias t='node ~/toggl-terminal/toggl.js '`
-This alias enables the quicker syntax `t stop` for example.
-
-## TODO
-
-Lägg till study som ett commando? som kör pomodoro åt en härifrån? Isf. hur notificatin?
+This alias enables the quicker syntax `t stop`.
