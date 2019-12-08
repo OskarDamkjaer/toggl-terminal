@@ -1,8 +1,8 @@
-# Toggl for terminal
+# Toggl for your terminal
 
-When you want to use the timer from toggl.com but from your terminal. By convention all my projects start with an uppercase. This small thing was built mainly for my own convenience and might not be super well maintained in the future :)
+Track your time with [toggl](https://www.toggl.com) right from your terminal! By convention all my projects start with an uppercase. 
 
-It is a bit light on error handling so use at your own risk.
+I built this mainly for my own convenience so it might have some rough edges :)
 
 ## Getting started
 
@@ -13,10 +13,10 @@ It is a bit light on error handling so use at your own risk.
 
 ## Available commands
 
-*   (node toggl.js) start projectName [optionalDescription] //Starts a project with the project name and description
-*   (node toggl.js) stop //Stop current timer if there is one
-*   (node toggl.js) status //Print current timer if there is one
-*   (node toggl.js) update //Update the list of projects (should be done automatically)
+*   `(node toggl.js) start projectName [optionalDescription] //Starts a project with the project name and description`
+*   `(node toggl.js) stop //Stop current timer if there is one`
+*   `(node toggl.js) status //Print current timer if there is one`
+*   `(node toggl.js) update //Update the list of projects (should be done automatically)`
 
 ## Convenient alias!
 
